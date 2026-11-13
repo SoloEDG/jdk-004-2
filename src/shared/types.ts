@@ -1,12 +1,25 @@
 export type Vec = { x: number; y: number };
 export type Phase = "ready" | "playing" | "paused" | "upgrade" | "ended";
 export type WeaponId = "pulse" | "orbit" | "nova";
+export interface Portal extends Vec {
+  radius: number;
+  /** Seconds of operational life left. Frozen while the run is paused or upgrading. */
+  life: number;
+  /** Visual pulse fed by a recent crossing. */
+  flash: number;
+}
+export interface PortalPair {
+  entry: Portal;
+  exit: Portal;
+}
 export interface Player extends Vec {
   hp: number;
   maxHp: number;
   speed: number;
   radius: number;
   invincible: number;
+  /** Brief anti-reentry window after a teleport. */
+  portalLock?: number;
 }
 export interface Enemy extends Vec {
   id: number;
@@ -15,6 +28,8 @@ export interface Enemy extends Vec {
   maxHp: number;
   radius: number;
   cooldown: number;
+  /** Brief anti-reentry window after a teleport. */
+  portalLock?: number;
 }
 export interface Bullet extends Vec {
   id: number;
@@ -27,12 +42,16 @@ export interface Bullet extends Vec {
   weapon: WeaponId | "enemy";
   pierce: number;
   hit: number[];
+  /** Brief anti-reentry window after a teleport. */
+  portalLock?: number;
 }
 export interface Drop extends Vec {
   id: number;
   kind: "xp" | "heal" | "magnet";
   value: number;
   life: number;
+  /** Brief anti-reentry window after a teleport. */
+  portalLock?: number;
 }
 export interface Weapon {
   id: WeaponId;
@@ -75,6 +94,12 @@ export interface GameDoc {
   enemies: Enemy[];
   bullets: Bullet[];
   drops: Drop[];
+  /** Deployed bidirectional portal pair, or null while undeployed. */
+  portals: PortalPair | null;
+  /** Pending placement stage for the deployment UI. */
+  portalDraft: PortalDraft | null;
+  /** Transient deployment feedback shown beside the battlefield. */
+  portalMessage: string;
   weapons: Weapon[];
   upgrades: Record<string, number>;
   choices: string[];
@@ -94,6 +119,13 @@ export interface Input {
   y: number;
   aim: Vec;
   firing: boolean;
+  /** Cannon-space pointer position used for portal placement. */
+  pointer?: Vec;
+}
+export interface PortalDraft {
+  stage: "entry" | "exit";
+  entry: Vec;
+  pointer: Vec;
 }
 export interface KillEvent {
   enemy: Enemy;

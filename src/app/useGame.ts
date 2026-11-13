@@ -3,6 +3,11 @@ import { createRun } from "../shared/createRun";
 import type { Input } from "../shared/types";
 import { simulate } from "./simulate";
 import { chooseUpgrade } from "../features/progression";
+import {
+  beginPortalDraft,
+  cancelPortalDraft,
+  closePortals,
+} from "../features/portals";
 import { loadRecords, saveRecords } from "../features/results";
 export function useGame() {
   const game = useRef(createRun(204004, loadRecords()));
@@ -11,6 +16,7 @@ export function useGame() {
     y: 0,
     aim: { x: 500, y: 0 },
     firing: false,
+    pointer: { x: 500, y: 325 },
   });
   const keys = useRef(new Set<string>());
   const [, render] = useState(0);
@@ -63,6 +69,16 @@ export function useGame() {
         if (d.phase === "playing") d.phase = "paused";
         else if (d.phase === "paused") d.phase = "playing";
       }
+      // Q toggles placement without spending a click on manual fire.
+      if (k === "q" && !e.repeat) {
+        const d = game.current;
+        if (d.phase !== "playing") return;
+        if (d.portalDraft) cancelPortalDraft(d);
+        else beginPortalDraft(d, input.current.pointer);
+      }
+      // R closes the pair; upgrades and pause keep it, since time is frozen there.
+      if (k === "r" && !e.repeat && game.current.phase === "playing")
+        closePortals(game.current);
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
     const hidden = () => {
@@ -92,10 +108,18 @@ export function useGame() {
       else if (d.phase === "paused") d.phase = "playing";
     },
     choose: (id: string) => chooseUpgrade(game.current, id),
+    deployPortal: () => {
+      const d = game.current;
+      if (d.phase !== "playing") return;
+      if (d.portalDraft) cancelPortalDraft(d);
+      else beginPortalDraft(d, input.current.pointer);
+    },
+    closePortal: () => closePortals(game.current),
     restart: () => {
       saveRecords(game.current.records);
       game.current = createRun(204004, game.current.records);
       keys.current.clear();
+      input.current.firing = false;
       game.current.phase = "playing";
     },
   };

@@ -17,10 +17,12 @@ import { WavePanel } from "../features/waves";
 import { ArsenalPanel } from "../features/arsenal";
 import { UpgradeDialog, ExperienceBar } from "../features/progression";
 import { StatsPanel, ResultDialog, HistoryPanel } from "../features/results";
+import { PortalPanel } from "../features/portals";
 import { formatTime } from "../shared/math";
 import { useAudio } from "./useAudio";
 export function App() {
-  const { game, input, start, toggle, choose, restart } = useGame();
+  const { game, input, start, toggle, choose, restart, deployPortal, closePortal } =
+    useGame();
   const d = game.current;
   const [history, setHistory] = useState(false);
   const [help, setHelp] = useState(false);
@@ -204,12 +206,16 @@ export function App() {
               <span>
                 <kbd>ESC</kbd> 暂停
               </span>
+              <span>
+                <kbd>Q</kbd> 传送门 <kbd>R</kbd> 关闭
+              </span>
               <span className="auto-fire">
                 <span className="status-dot" /> 自动攻击已启用
               </span>
             </div>
           </section>
           <aside className="right-sidebar">
+            <PortalPanel doc={d} deploy={deployPortal} close={closePortal} />
             <ArsenalPanel doc={d} />
             <StatsPanel doc={d} />
             <div className="tip">
@@ -254,6 +260,11 @@ export function App() {
             <p>
               ESC / P
               暂停。切换窗口自动暂停。八波共四分钟，完成后自动记录本局统计。
+            </p>
+            <p>
+              按 Q 或使用右侧「相位传送门」面板部署一对双向传送门：先点入口，再点出口。
+              出口过于靠边或与入口重叠会被拒绝并保留原门。
+              已穿越的弹丸保留出口方向；未穿越的实体继续原路线；升级与暂停会冻结门的寿命。
             </p>
             <button className="primary" onClick={() => setHelp(false)}>
               已了解

@@ -565,6 +565,76 @@ kbd {
 .tip {
   padding: 18px 17px;
 }
+.portal-panel .portal-bars {
+  margin-top: 10px;
+}
+.portal-bars .bar i {
+  background: #7de9ff;
+}
+.portal-readout {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 11px;
+  font-size: 10px;
+  color: #8aa3ad;
+}
+.portal-readout b {
+  color: #c8f6ff;
+  font-weight: 500;
+}
+.portal-link {
+  color: #5fd3ec;
+}
+.portal-life {
+  margin-left: auto;
+  color: #7fd9ea;
+}
+.portal-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 14px;
+}
+.portal-deploy,
+.portal-close {
+  border: 1px solid #2c5160;
+  background: #12232b;
+  color: #9fdfe8;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.portal-deploy {
+  flex: 1;
+  justify-content: center;
+}
+.portal-deploy:hover:not(:disabled),
+.portal-close:hover:not(:disabled) {
+  background: #1b3944;
+  border-color: #63d6ec;
+  color: #d8fbff;
+}
+.portal-deploy.active {
+  border-color: #ffcf8a;
+  color: #ffdca8;
+  background: #2a2317;
+}
+.portal-message {
+  margin: 10px 0 0;
+  font-size: 9px;
+  line-height: 1.7;
+  color: #77c9d8;
+  min-height: 24px;
+}
+.portal-panel .tiny {
+  margin: 12px 0 0;
+}
+.portal-stage {
+  color: #9fb7bd;
+}
 .tip > span {
   font-size: 9px;
   letter-spacing: 1px;
@@ -854,7 +924,7 @@ footer .mono {
   .right-sidebar {
     grid-column: 1/-1;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
   }
   .right-sidebar > .panel {
     border-right: 1px solid #252e38;

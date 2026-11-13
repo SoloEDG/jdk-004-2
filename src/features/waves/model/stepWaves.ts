@@ -1,6 +1,11 @@
 import type { GameDoc } from "../../../shared/types";
 import { distance, normalize } from "../../../shared/math";
 import { spawnEnemy } from "../lib/spawn";
+import {
+  markCrossed,
+  portalRoute,
+  sweepThroughPortals,
+} from "../../portals/lib/traverse";
 import { ENEMY_CATALOG, WAVE_DURATION, TOTAL_WAVES } from "./catalog";
 export function stepWaves(doc: GameDoc, dt: number): void {
   if (doc.victory) return;
@@ -26,17 +31,40 @@ export function stepWaves(doc: GameDoc, dt: number): void {
     if (doc.enemies.length < 180) doc.enemies.push(spawnEnemy(doc));
   }
   for (const enemy of doc.enemies) {
-    const toward = normalize(doc.player.x - enemy.x, doc.player.y - enemy.y),
+    // Chasing the player means chasing the cheaper of a direct line or the portal shortcut.
+    const route = portalRoute(doc, enemy, (enemy.portalLock || 0) > 0),
+      toward = normalize(route.target.x - enemy.x, route.target.y - enemy.y),
+      // Shots still aim at the player; only movement takes the portal detour.
+      aimAt = normalize(doc.player.x - enemy.x, doc.player.y - enemy.y),
       range = distance(enemy, doc.player);
     const standOff =
-      enemy.kind === "shooter" ? (range < 170 ? -1 : range < 245 ? 0 : 1) : 1;
+      enemy.kind === "shooter" && !route.viaPortal
+        ? range < 170
+          ? -1
+          : range < 245
+            ? 0
+            : 1
+        : 1;
     const speed = ENEMY_CATALOG[enemy.kind].speed * (1 + doc.wave * 0.035);
-    enemy.x += toward.x * speed * standOff * dt;
-    enemy.y += toward.y * speed * standOff * dt;
+    const previous = { x: enemy.x, y: enemy.y };
+    const target = {
+      x: enemy.x + toward.x * speed * standOff * dt,
+      y: enemy.y + toward.y * speed * standOff * dt,
+    };
+    const path = sweepThroughPortals(
+      doc,
+      previous,
+      target,
+      enemy.radius,
+      (enemy.portalLock || 0) > 0,
+    );
+    enemy.x = path.position.x;
+    enemy.y = path.position.y;
+    if (path.crossed) markCrossed(enemy, doc);
     enemy.cooldown -= dt;
     if (enemy.kind !== "chaser" && enemy.cooldown <= 0) {
       enemy.cooldown = enemy.kind === "elite" ? 1.8 : 2.6;
-      const angle = Math.atan2(toward.y, toward.x),
+      const angle = Math.atan2(aimAt.y, aimAt.x),
         spread = enemy.kind === "elite" ? [-0.24, 0, 0.24] : [0];
       for (const offset of spread) {
         doc.bullets.push({

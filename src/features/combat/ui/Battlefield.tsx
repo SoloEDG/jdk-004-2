@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { GameDoc, Input } from "../../../shared/types";
 import { WIDTH, HEIGHT } from "../../../shared/types";
+import { placePortal } from "../../portals";
 import { renderScene } from "../lib/renderScene";
 export function Battlefield({
   doc,
@@ -16,6 +17,13 @@ export function Battlefield({
     const ctx = c.getContext("2d");
     if (ctx) renderScene(ctx, doc);
   });
+  const toField = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return {
+      x: ((e.clientX - r.left) * WIDTH) / r.width,
+      y: ((e.clientY - r.top) * HEIGHT) / r.height,
+    };
+  };
   return (
     <canvas
       ref={canvas}
@@ -23,13 +31,17 @@ export function Battlefield({
       height={HEIGHT}
       aria-label="弹幕战场，使用 WASD 或方向键移动"
       onPointerMove={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        input.current.aim = {
-          x: ((e.clientX - r.left) * WIDTH) / r.width,
-          y: ((e.clientY - r.top) * HEIGHT) / r.height,
-        };
+        const point = toField(e);
+        input.current.aim = point;
+        input.current.pointer = point;
+        if (doc.portalDraft) doc.portalDraft.pointer = point;
       }}
-      onPointerDown={(e) => {e.currentTarget.setPointerCapture(e.pointerId); input.current.firing = true;}}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        // Placement clicks select a spot; they do not also start manual fire.
+        if (doc.portalDraft) placePortal(doc, toField(e));
+        else input.current.firing = true;
+      }}
       onPointerUp={() => (input.current.firing = false)}
       onPointerCancel={() => (input.current.firing = false)}
       onLostPointerCapture={() => (input.current.firing = false)}
